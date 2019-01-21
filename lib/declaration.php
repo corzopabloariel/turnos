@@ -484,8 +484,7 @@ define( "ENTIDADES",
             "FORM" => [
                 ["TEXTO" => "/id/","ATTR" => ["id"]],
                 ["TEXTO" => "<div class='form-row'><div class='form-group col-6'>/nombre/</div><div class='form-group col-6'>/apellido/</div></div>","ATTR" => ["nombre","apellido"]],
-                ["TEXTO" => "<div class='form-row'><div class='form-group col-4'>/tipodocumento/</div><div class='form-group col-8'>/documento/</div></div>","ATTR" => ["tipodocumento","documento"]],
-                ["TEXTO" => "<div class='form-row'><div class='form-group col-12'>/fechanacimiento/</div></div>","ATTR" => ["fechanacimiento"]]
+                ["TEXTO" => "<div class='form-row'><div class='form-group col-3'>/tipodocumento/</div><div class='form-group col-4'>/documento/</div><div class='form-group col-5'>/fechanacimiento/</div></div>","ATTR" => ["tipodocumento","documento","fechanacimiento"]]
             ]
         ],
         "personacontacto" => [
@@ -503,7 +502,7 @@ define( "ENTIDADES",
                 ],
                 "idpersona" => [
                     "TIPO" => "TP_RELACION",
-                    "VISIBILIDAD" => "TP_VISIBLE",
+                    "VISIBILIDAD" => "TP_INVISIBLE",
                     "NECESARIO" => 1,
                     "NOMBRE" => "persona",
                     "DEFAULT" => 0,
@@ -543,6 +542,10 @@ define( "ENTIDADES",
             "VISIBLE" => [
                 "TEXTO" => "/detalle/ (/tipocontacto/)",
                 "ATTR" => ["detalle","tipocontacto"]
+            ],
+            "FORM" => [
+                ["TEXTO" => "/id/ /idpersona/","ATTR" => ["id","idpersona"]],
+                ["TEXTO" => "<div class='form-row'><div class='form-group col-4'>/tipocontacto/</div><div class='form-group col-8'>/detalle/</div></div>","ATTR" => ["tipocontacto","detalle"]]
             ]
         ],
         "personadomicilio" => [
@@ -560,7 +563,7 @@ define( "ENTIDADES",
                 ],
                 "idpersona" => [
                     "TIPO" => "TP_RELACION",
-                    "VISIBILIDAD" => "TP_VISIBLE",
+                    "VISIBILIDAD" => "TP_INVISIBLE",
                     "NECESARIO" => 1,
                     "NOMBRE" => "persona",
                     "DEFAULT" => 0,
@@ -573,7 +576,7 @@ define( "ENTIDADES",
                     "TIPO" => "TP_RELACION",
                     "VISIBILIDAD" => "TP_VISIBLE",
                     "NECESARIO" => 1,
-                    "NOMBRE" => "ubicacion",
+                    "NOMBRE" => "ubicación",
                     "DEFAULT" => 0,
                     "RELACION" => [
                         "ENTIDAD" => "localidad",
@@ -611,6 +614,11 @@ define( "ENTIDADES",
             "VISIBLE" => [
                 "TEXTO" => "/calle/ #/altura/ (/codigopostal/). /idlocalidad/",
                 "ATTR" => ["calle","altura","codigopostal","idlocalidad"]
+            ],
+            "FORM" => [
+                ["TEXTO" => "/id/ /idpersona/","ATTR" => ["id","idpersona"]],
+                ["TEXTO" => "<div class='form-row'><div class='form-group col-8'>/calle/</div><div class='form-group col-4'>/altura/</div></div>","ATTR" => ["calle","altura"]],
+                ["TEXTO" => "<div class='form-row'><div class='form-group col-8'>/idlocalidad/</div><div class='form-group col-4'>/codigopostal/</div></div>","ATTR" => ["idlocalidad","codigopostal"]]
             ]
         ],
         "personatipo" => [
@@ -757,6 +765,12 @@ define( "ENTIDADES",
                     "NECESARIO" => 0,
                     "DEFAULT" => 0
                 ]
+            ],
+            "FORM" => [
+                ["TEXTO" => "/id/","ATTR" => ["id"]],
+                ["TEXTO" => "<div class='form-row'><div class='form-group col-6'>/idespecializacion/</div><div class='form-group col-6'>/matricula/</div></div>","ATTR" => ["idespecializacion","matricula"]],
+                ["TEXTO" => "<div class='form-row'><div class='form-group col-6'>/duracionturno/</div><div class='form-group col-6'>/entreturno/</div></div>","ATTR" => ["duracionturno","entreturno"]],
+                ["TEXTO" => "<div class='form-row'><div class='form-group col-12'>/detalle/</div></div>","ATTR" => ["detalle"]]
             ]
         ],
         "profesionaldia" => [

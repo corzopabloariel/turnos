@@ -26,6 +26,8 @@ a, a:hover { text-decoration: none; }
 .cursor-pointer { cursor: pointer; }
 .cursor-default { cursor: default; }
 
+.form-row:last-child > .form-group { margin-bottom: 0; }
+
 .h-100-71px { height: 100%; padding-top: 71px; }
 
 .fixed-top-left { left:0; top: 0; }

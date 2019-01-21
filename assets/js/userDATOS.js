@@ -93,12 +93,16 @@ userDATOS.encodeBase64 = function( src ) {
     return _r;
 }
 /** */
+userDATOS.select2 = function(target) {
+    $(target).select2({ theme: "bootstrap4", width: 'resolve' });
+}
+/** */
 const imgLoading = userDATOS.encodeBase64("assets/image/loading.1.gif", "gif");
 /** */
 userDATOS.vistaProfesional = function(target, lugar) {
     if(lugar == "home") {
         html = "";
-        html += "<div class='container mt-4'>";
+        html += "<div class='container py-4'>";
             html += "<div class='card'>";
                 html += "<div class='card-header bg-dark-accent color-light-shades font-1_5'>";
                     html += "<i class='far fa-clock'></i> Turnos del día 15/01";
@@ -114,18 +118,29 @@ userDATOS.vistaProfesional = function(target, lugar) {
     } else if(lugar == "misDatos") {
         user = JSON.parse(sessionStorage.user);
         personaPyrus = new Pyrus("persona");
+        lugarPyrus = new Pyrus("lugar");
         personaContactoPyrus = new Pyrus("personacontacto");
         personaDomicilioPyrus = new Pyrus("personadomicilio");
         profesionalPyrus = new Pyrus("profesional");
 
         profesional = profesionalPyrus.mostrar_1(user.idprofesional);
+        lugar = lugarPyrus.mostrar_1(user.idlugar);
         personaNombre = personaPyrus.mostrar_1(user.idpersona);
         personaDocumento = personaPyrus.mostrar_1(user.idpersona, "id", { TEXTO: "/tipodocumento/ /documento/", ATTR: ["tipodocumento", "documento"] });
         personaFecha = personaPyrus.mostrar_1(user.idpersona, "id", { TEXTO: "/fechanacimiento/", ATTR: ["fechanacimiento"] });
+
         total = 1;
         datosNecesarios = [];
         html = "";
         html += "<div class='container py-4'>";
+            html += "<div class='row'>";
+                html += "<div class='col-12'>";
+                    if(lugar !== null)
+                        html += `<p>Lugar: ${lugar}</p>`;
+                    else
+                        html += `<p>Sin lugar registrado</p>`;
+                html += "</div>";
+            html += "</div>";
             html += "<div class='row' id='divEstadoDatos'>";
                 html += `<img class="d-block mx-auto w-50 h-50 mb-3" src="${imgLoading}" />`;
             html += "</div>";

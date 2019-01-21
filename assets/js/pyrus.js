@@ -112,53 +112,61 @@ Pyrus = function (e = null) {
     /** */
     this.mostrar_1 = function (id, attr = "id", data = null) {
         let _null = null;
-        this.busqueda({ attr: attr, value: id }, function(aux) {
-            if (this.objeto["VISIBLE"] === undefined && data === null) {
-                _null = aux;
-                return false;
-            }
-            let STR_aux = null;
-            let ATTR_aux = null;
-            if (data !== null) {
-                delete window.mostrar_1[this.entidad][id];
-                STR_aux = data["TEXTO"];
-                ATTR_aux = data["ATTR"];
-            } else {
-                STR_aux = this.objeto["VISIBLE"]["TEXTO"];
-                ATTR_aux = this.objeto["VISIBLE"]["ATTR"];
-            }
-            if (window.mostrar_1 === undefined) window.mostrar_1 = []
-            if (window.mostrar_1[this.entidad] === undefined) window.mostrar_1[this.entidad] = {};
+        if (window.mostrar_1 === undefined)
+            window.mostrar_1 = {}
+        if (window.mostrar_1[this.entidad] === undefined)
+            window.mostrar_1[this.entidad] = {};
+        if (window.mostrar_1[this.entidad][attr] === undefined)
+            window.mostrar_1[this.entidad][attr] = {};
+        
+        if (window.mostrar_1[this.entidad][attr][id] === undefined) {
+            this.busqueda({ attr: attr, value: id }, function (aux) {
+                window.mostrar_1[this.entidad][attr][id] = aux;
+            }, false);
+        }
+        
+        
+        if (this.objeto["VISIBLE"] === undefined || window.mostrar_1[this.entidad][attr][id] === null) {
+            _null = window.mostrar_1[this.entidad][attr][id];
+            delete window.mostrar_1[this.entidad][attr][id];
+            return _null;
+        }
+        let STR_aux = null;
+        let ATTR_aux = null;
+        if (data !== null) {
+            STR_aux = data["TEXTO"];
+            ATTR_aux = data["ATTR"];
+        } else {
+            STR_aux = this.objeto["VISIBLE"]["TEXTO"];
+            ATTR_aux = this.objeto["VISIBLE"]["ATTR"];
+        }
 
-
-            if (window.mostrar_1[this.entidad][id] === undefined) {
-                window.mostrar_1[this.entidad][id] = "";
-                if (aux === null) return "SIN DATO";
-                for (var i in ATTR_aux) {
-                    switch (this.especificacion[ATTR_aux[i]]["TIPO"]) {
-                        case "TP_RELACION":
-                            e = this.especificacion[ATTR_aux[i]]["RELACION"]["ENTIDAD"];
-                            a = this.especificacion[ATTR_aux[i]]["RELACION"]["ATTR"];
-                            pyrusAux = new Pyrus(e);
-                            STR_aux = STR_aux.replace(`/${ATTR_aux[i]}/`, pyrusAux.mostrar_1(aux[ATTR_aux[i]]));
-                        break;
-                        case "TP_OPTION":
-                            option = this.especificacion[ATTR_aux[i]]["OPTION"].find(function (o) { if (parseInt(o.id) == parseInt(aux[ATTR_aux[i]])) return o; })
-                            STR_aux = STR_aux.replace(`/${ATTR_aux[i]}/`, option["text"]);
-                        break;
-                        case "TP_DATE":
-                            STR_aux = STR_aux.replace(`/${ATTR_aux[i]}/`, dates.string(new Date(aux[ATTR_aux[i]] + " 00:00:00"), 0, 0, "ddmmaaaa"));
-                        break;
-                        default:
-                            STR_aux = STR_aux.replace(`/${ATTR_aux[i]}/`, aux[ATTR_aux[i]]);
-                        break;
-                    }
-                }
-                window.mostrar_1[this.entidad][id] = STR_aux;
+        for (var i in ATTR_aux) {
+            switch (this.especificacion[ATTR_aux[i]]["TIPO"]) {
+                case "TP_RELACION":
+                    e = this.especificacion[ATTR_aux[i]]["RELACION"]["ENTIDAD"];
+                    a = this.especificacion[ATTR_aux[i]]["RELACION"]["ATTR"];
+                    pyrusAux = new Pyrus(e);
+                    STR_aux = STR_aux.replace(`/${ATTR_aux[i]}/`, pyrusAux.mostrar_1(window.mostrar_1[this.entidad][attr][id][ATTR_aux[i]]));
+                    break;
+                case "TP_OPTION":
+                    aux = window.mostrar_1[this.entidad][attr][id];
+                    option = this.especificacion[ATTR_aux[i]]["OPTION"].find(function (o) {
+                        if (parseInt(o.id) == parseInt(aux[ATTR_aux[i]]))
+                            return o;
+                        });
+                    STR_aux = STR_aux.replace(`/${ATTR_aux[i]}/`, option["text"]);
+                    break;
+                case "TP_DATE":
+                    STR_aux = STR_aux.replace(`/${ATTR_aux[i]}/`, dates.string(new Date(window.mostrar_1[this.entidad][attr][id][ATTR_aux[i]] + " 00:00:00"), 0, 0, "ddmmaaaa"));
+                    break;
+                default:
+                    STR_aux = STR_aux.replace(`/${ATTR_aux[i]}/`, window.mostrar_1[this.entidad][attr][id][ATTR_aux[i]]);
+                    break;
             }
-        }, false);
+        }
         if(_null === null)
-            return window.mostrar_1[this.entidad][id];
+            return STR_aux;
         else
             return _null;
     }
@@ -231,13 +239,15 @@ Pyrus = function (e = null) {
         if (window.formulario === undefined)
             window.formulario = [];
 
-        if (window.formulario[this.entidad] === undefined) {
-            window.formulario[this.entidad] = "";
+        if (window.formulario[this.entidad] === undefined)
+            window.formulario[this.entidad] = {};
 
+        if (window.formulario[this.entidad][id] === undefined) {
+            window.formulario[this.entidad][id] = "";
             let OBJ_funciones = {}
             let ARR_form = this.objeto['FORM'];//ARRAY de OBJETOS
 
-            if (this.objeto['FORM_CLASS'] === undefined) this.objeto['FORM_CLASS'] = 'form-control form-control-lg';
+            if (this.objeto['FORM_CLASS'] === undefined) this.objeto['FORM_CLASS'] = 'form-control';
             let STR_class = this.objeto['FORM_CLASS'];
 
             if (this.objeto['FUNCIONES'] !== undefined) OBJ_funciones = this.objeto['FUNCIONES'];
@@ -247,22 +257,23 @@ Pyrus = function (e = null) {
                     TEXTO = ARR_form[i]["TEXTO"];
                     ATTR = ARR_form[i]["ATTR"];
                     for (var e in ATTR) {
-                        let AUX_nombre = e + (id != "" ? "_" + id : "");
+                        let AUX_nombre = ATTR[e] + (id != "" ? "_" + id : "");
                         if (ATTR[e] == "id" || this.especificacion[ATTR[e]]["VISIBILIDAD"] == "TP_INVISIBLE")
                             TEXTO = TEXTO.replace(`/${ATTR[e]}/`, this.inputAdecuado(this.especificacion[ATTR[e]], ATTR[e], AUX_nombre, STR_class));
                         else {
                             let OBJ_funcion = {};
+                            let label = (this.especificacion[ATTR[e]]["NOMBRE"] === undefined ? ATTR[e] : this.especificacion[ATTR[e]]["NOMBRE"]);
                             if (OBJ_funciones[ATTR[e]] !== undefined)
                                 OBJ_funcion = this.objeto['FUNCIONES'][ATTR[e]];
-                            TEXTO = TEXTO.replace(`/${ATTR[e]}/`, this.inputAdecuado(this.especificacion[ATTR[e]], ATTR[e], AUX_nombre, STR_class, OBJ_funcion));
+                            
+                            TEXTO = TEXTO.replace(`/${ATTR[e]}/`, `<label class="text-truncate text-capitalize d-block">${label.toLowerCase()}</label>${this.inputAdecuado(this.especificacion[ATTR[e]], ATTR[e], AUX_nombre, STR_class, OBJ_funcion)}`);
                         }
                     }
-                    window.formulario[this.entidad] += TEXTO
+                    window.formulario[this.entidad][id] += TEXTO
                 }
             }
-
-            return window.formulario[this.entidad];
-        } else return window.formulario[this.entidad];
+        }
+        return window.formulario[this.entidad][id];
     }
     /* ----------------- */
     this.inputAdecuado = function (OBJ_elemento, ATTR_nombre, TAG_nombre, STR_class, OBJ_funcion) {
@@ -271,17 +282,20 @@ Pyrus = function (e = null) {
 
         if (OBJ_elemento['VISIBILIDAD'] == 'TP_OCULTO' || OBJ_elemento['VISIBILIDAD'] == 'TP_VISIBLE') {
             switch (OBJ_elemento['TIPO']) {
-                case 'TP_ENTERO':
+                case 'TP_INTEGER':
                     return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "number", STR_class, OBJ_funcion);
                     break;
                 case 'TP_STRING':
                     return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "text", STR_class, OBJ_funcion);
                     break;
-                case 'TP_STRING_L':
-                    return this.inputStringL(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion);
+                case 'TP_TEXT':
+                    return this.inputTextarea(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion);
                     break;
-                case 'TP_FECHA':
+                case 'TP_DATE':
                     return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "date", STR_class, OBJ_funcion);
+                    break;
+                case 'TP_TIME':
+                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "time", STR_class, OBJ_funcion);
                     break;
                 case 'TP_PASSWORD':
                     return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "password", STR_class, OBJ_funcion);
@@ -290,10 +304,14 @@ Pyrus = function (e = null) {
                     if (OBJ_elemento['RELACION']['ENTIDAD'] != this.entidad) {
                         let NEW_aux = new Pyrus(OBJ_elemento['RELACION']['ENTIDAD']);
                         return NEW_aux.select(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion);
-                    } else return this.select(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion);
+                    } else
+                        return this.select(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion);
                     break;
-                case 'TP_ENUM':
-                    return this.select(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion, OBJ_elemento["ENUM"]);
+                case 'TP_OPTION':
+                    option = {};
+                    for (var i in OBJ_elemento["OPTION"]) 
+                        option[OBJ_elemento["OPTION"][i]["id"]] = OBJ_elemento["OPTION"][i]["text"];
+                    return this.select(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion, option);
                     break;
                 default:
                     return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "text", STR_class, OBJ_funcion);
@@ -323,10 +341,26 @@ Pyrus = function (e = null) {
                 STR_class += " texto-text";
                 break;
             case "date":
-                STR_class += " texto-date";
+                STR_class += " texto-date text-right";
+                break;
+            case "time":
+                STR_class += " texto-time text-right";
                 break;
         }
         return "<input " + (necesario ? "required='true'" : "") + " " + STR_funcion + " ng-name='" + STR_nombre + "' name='" + STR_nombre + "' id='" + STR_nombre + "' class=\"" + STR_class + "\" type='" + STR_type + "' placeholder='" + OBJ_elemento["NOMBRE"] + "' />";
+    }
+    /** */
+    this.inputTextarea = function (OBJ_elemento, STR_nombre, STR_class, OBJ_funcion = null) {
+        let STR_funcion = "";
+        let necesario = OBJ_elemento["NECESARIO"];
+
+        if (OBJ_funcion !== null) {
+            for (var i in OBJ_funcion) {
+                if (STR_funcion != "") STR_funcion += " ";
+                STR_funcion += i + "=" + OBJ_funcion[i];
+            }
+        }     
+        return `<textarea ${(necesario ? "required='true'" : "")} ${STR_funcion} ng-name="${STR_nombre}" name="${STR_nombre}" id="${STR_nombre}" class="${STR_class}" placeholder="${OBJ_elemento["NOMBRE"]}"></textarea>`;
     }
 	/**
 	 * Función para la creación de formularios en un lugar determinado del dom
@@ -377,16 +411,26 @@ Pyrus = function (e = null) {
         aux = new Pyrus(table);
         visible = aux.objeto['VISIBLE'];
         if (visible === undefined) return "";
-        data = aux.search(value, attr);
-        if (data === null) return "";
         STR_form = visible['TEXTO'];
+        if(window.relacion === undefined) window.relacion = {};
+        if(window.relacion[table] === undefined) {
+            window.relacion[table] = {};
+            if (window.relacion[table][attr] === undefined) {
+                window.relacion[table][attr] = {};
+                if (window.relacion[table][attr][value] === undefined) {
+                    aux.busqueda({ attr: attr, value: value }, function (data) {
+                        window.relacion[table][attr][value] = data;
+                    }, false);
+                }
+            }
+        }
         for (var i in visible['ATTR']) {
             if (aux.especificacion[visible['ATTR'][i]]['TIPO'] != 'TP_RELACION') {
-                STR_form = STR_form.replace('/' + visible['ATTR'][i] + '/', data[visible['ATTR'][i]]);
+                STR_form = STR_form.replace(`/${visible['ATTR'][i]}/`, window.relacion[table][attr][value][visible['ATTR'][i]]);
             } else {
                 tabla = aux.especificacion[visible['ATTR'][i]]['RELACION']['ENTIDAD'];
                 tabla_attr = aux.especificacion[visible['ATTR'][i]]['RELACION']['ATTR'];
-                STR_form = STR_form.replace('/' + OBJ_formato['ATTR'][i] + '/', aux.relacion(tabla, tabla_attr, value));
+                STR_form = STR_form.replace(`/${visible['ATTR'][i]}/`, aux.relacion(tabla, tabla_attr, value));
             }
         }
         return STR_form;

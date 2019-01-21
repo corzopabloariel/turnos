@@ -9,10 +9,12 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.10.18/af-2.3.2/b-1.5.4/b-colvis-1.5.4/b-html5-1.5.4/b-print-1.5.4/cr-1.5.0/fc-3.2.5/fh-3.1.4/kt-2.5.0/r-2.2.2/datatables.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.css"/>
+    <link rel="stylesheet" type="text/css" href="assets/css/select2-bootstrap4.css" />
     <link rel="stylesheet" type="text/css" href="assets/css/style.css"/>
 </head>
 <body class="bg-light-shades cursor-default">
-    <div id="divMenu" class="position-absolute w-100 h-100 bg-white zIndexModal" ng-init="showMenu = true" ng-class=" showMenu ? 'd-none' : 'd-block' ">
+    <div id="divMenu" class="position-absolute w-100 h-100 bg-white zIndexModal" style="top: 0; left: 0;" ng-init="showMenu = true" ng-class=" showMenu ? 'd-none' : 'd-block' ">
         <div dynamic="htmlMenu" class="scrollY container-fluid h-100"></div>
     </div>
     <!-- MODAL -->
@@ -51,5 +53,13 @@
     <script src="assets/js/toolbox.js"></script>
     <script src="assets/js/pyrus.js"></script>
     <script src="assets/js/userDATOS.js"></script>
+    <script>
+        $(document).ready(function() {
+            $("#modalXL").on("hidden.bs.modal",function() {
+                if(window.personaContacto !== undefined)
+                    delete window.personaContacto;
+            });
+        });
+    </script>
 </body>
 </html>

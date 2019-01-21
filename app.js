@@ -61,6 +61,9 @@ app.factory('LoginService', function ($rootScope) {
                     $rootScope.globals.currentUser["idprofesional"] = e.data.idprofesional;
                     $rootScope.globals.currentUser["idayudante"] = e.data.idayudante;
                 });
+                userDATOS.busqueda({ value: $rootScope.globals.currentUser["idprofesional"], entidad: "profesional"}, function(e) {
+                    $rootScope.globals.currentUser["idlugar"] = e.data.idlugar;
+                });
                 isAuthenticated = username === data.data.user && md5(password) === data.data.pass;
             });
             return isAuthenticated;
@@ -176,12 +179,66 @@ app.controller("LoginController", function ($location, $rootScope, $scope, Login
     editarPersonal = function() {
         $scope.editarPersonal();
     }
+    $scope.completarDatos = function() {
+        let target = $("#modalXL");
+        let personaContactoPyrus = new Pyrus("personacontacto");
+        userDATOS.busqueda({ value: $rootScope.globals.currentUser.idpersona, entidad: "persona" }, function (data) {
+            target.find(`#persona_id`).val(data.data.id);
+            target.find(`#persona_nombre`).val(data.data.nombre);
+            target.find(`#persona_apellido`).val(data.data.apellido);
+            target.find(`#persona_documento`).val(data.data.documento);
+            target.find(`#persona_tipodocumento`).val(data.data.tipodocumento).trigger("change");
+            userDATOS.select2("#persona_tipodocumento");
+            target.find(`#persona_fechanacimiento`).val(data.data.fechanacimiento);
+            // target.find(`#persona_nombre,#persona_apellido,#persona_documento,#persona_tipodocumento,#persona_fechanacimiento`).attr("disabled",true)
+        }, true);
+        userDATOS.busqueda({ value: $rootScope.globals.currentUser.idpersona, entidad: "personadomicilio", column: "idpersona" }, function (data) {
+            if(data.data !== null)  {
+                target.find(`#personadomicilio_id`).val(data.data.id);
+                target.find(`#personadomicilio_idpersona`).val(data.data.idpersona);
+                target.find(`#personadomicilio_calle`).val(data.data.calle);
+                target.find(`#personadomicilio_altura`).val(data.data.altura);
+                target.find(`#personadomicilio_codigopostal`).val(data.data.codigopostal);
+                target.find(`#personadomicilio_idlocalidad`).val(data.data.idlocalidad).trigger("change");
+            }
+            userDATOS.select2("#personadomicilio_idlocalidad");
+        }, true);
+
+        userDATOS.busqueda({ value: $rootScope.globals.currentUser.idpersona, entidad: "personacontacto", column: "idpersona", retorno: 0 }, function (data) {
+            if (window.personaContacto === undefined) window.personaContacto = 0;
+            if(data.data.length == 0) {
+                target.find("#personaContacto").append(`<p class="mb-0 text-muted">Sin contactos</p>`);
+            } else {
+                for(var i in data.data) {
+                    window.personaContacto = i;
+                    target.find("#personaContacto").append(personaContactoPyrus.formulario_OK(i));
+                    target.find("#personaContacto").find(`#personacontacto_id_${data.data[i]["id"]}`).val(data.data[i]["id"]);
+                    target.find("#personaContacto").find(`#personacontacto_tipocontacto_${data.data[i]["id"]}`).val(data.data[i]["tipocontacto"]).trigger("change");
+                    userDATOS.select2(`#personacontacto_tipocontacto_${data.data[i]["id"]}`);
+                    target.find("#personaContacto").find(`#personacontacto_detalle_${data.data[i]["id"]}`).val(data.data[i]["detalle"]);
+                }
+            }
+        }, true);
+
+        userDATOS.busqueda({ value: $rootScope.globals.currentUser.idprofesional, entidad: "profesional" }, function (data) {
+            if(data.data !== null)  {
+                target.find(`#profesional_id`).val(data.data.id);
+                target.find(`#profesional_matricula`).val(data.data.matricula);
+                target.find(`#profesional_duracionturno`).val(data.data.duracionturno);
+                target.find(`#profesional_entreturno`).val(data.data.entreturno);
+                target.find(`#profesional_detalle`).val(data.data.detalle);
+            }
+            userDATOS.select2("#profesional_idespecializacion");
+        }, true);
+    }
     $scope.editarPersonal = function() {
         $rootScope.htmlModal = `<img class="d-block mx-auto w-50 h-50" src="${imgLoading}" />`;
         $rootScope.$digest();
         $("#modalXL").modal("show");
         let promise = new Promise(function (resolve, reject) {
             let personaPyrus = new Pyrus("persona");
+            let personaDomicilioPyrus = new Pyrus("personadomicilio");
+            let profesionalPyrus = new Pyrus("profesional");
             let html = "";
             html += `<div class="modal-header bg-light">`;
                 html += `<h5 class="modal-title text-uppercase">Mis datos</h5>`;
@@ -192,16 +249,34 @@ app.controller("LoginController", function ($location, $rootScope, $scope, Login
             html += `<div class="modal-body">`;
                 html += `<div class="row">`;
                     html += `<div class="col-6">`;
-                        html += `<h3>General</h3>`;
+                        html += `<h3>Datos personales</h3>`;
                         html += personaPyrus.formulario_OK();
                     html += `</div>`;
                     html += `<div class="col-6">`;
-                        html += `<h3>Profesión</h3>`;
+                        html += `<h3>Domicilio</h3>`;
+                        html += personaDomicilioPyrus.formulario_OK();
                     html += `</div>`;
                 html += `</div>`;
-                html += `<div class="row pt-2">`;
-                    html += `<div class="col-12">`;
-                        html += `<h3>Turno</h3>`;
+                html += `<div class="row pt-4">`;
+                    html += `<div class="col-6">`;
+                        html += `<h3>Contacto</h3>`;
+                        html += `<div id="personaContacto"></div>`;
+                    html += `</div>`;
+                    html += `<div class="col-6">`;
+                        html += `<h3>Datos profesionales</h3>`;
+                        msg = "Si no encuentra su especialización, comuniquese con el administrador del lugar para establecer los datos necesarios.";
+                        html += `<div class="alert alert-primary" role="alert" style="font-size:.8em">${msg}</div>`;
+                        html += profesionalPyrus.formulario_OK();
+                    html += `</div>`;
+                html += `</div>`;
+            html += `</div>`;
+            html += `<div class="modal-footer w-100 d-block bg-light">`;
+                html += `<div class="row">`;
+                    html += `<div class="col-6 d-flex align-items-center">`;
+                        html += '<label class="m-0 d-block"><input ng-model="dataOK" type="checkbox" class="mr-2"/>Estoy de acuerdo en modificar estos datos</label>'
+                    html += `</div>`;
+                    html += `<div class="col-6 d-flex justify-content-end">`;
+                        html += `<button ng-disabled="!dataOK" class="btn btn-lg text-uppercase btn-success" id="btnConfirmar">confirmar</button>`
                     html += `</div>`;
                 html += `</div>`;
             html += `</div>`;
@@ -212,12 +287,13 @@ app.controller("LoginController", function ($location, $rootScope, $scope, Login
             promise
                 .then(function(h) {
                     $rootScope.htmlModal = h;
-                    $rootScope.$digest(); 
+                    $rootScope.$digest();
+                    $scope.completarDatos();
                 })
         };
         
         setTimeout(() => {
             promiseFunction();
-        }, 1000 );
+        }, 1500 );
     }
 });
