@@ -162,13 +162,8 @@ class PYRUS_ACTION {
         $entidad = $d['entidad'];
         $objeto = $d['objeto'];
         $attr = $d['attr'];
-        // var_dump($objeto); // como recibe un objeto json
-        $ret = PYRUS_DB::set_one($entidad, $objeto, $attr);
-        if($ret === PYRUS_ERROR){ //WTF! 1 == 99999 => TRUE???
-            response(400,'ERROR: ' . $entidad,PYRUS_NOTIFICATIONS::get_errors());
-        } else {
-            response(200,'ok ' . $entidad, $ret);
-        }
+        
+        response(200,'ok ' . $entidad, PYRUS_DB::set_one($entidad, $objeto, $attr));
     }
 
     /**

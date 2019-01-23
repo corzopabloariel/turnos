@@ -399,7 +399,7 @@ class PYRUS_DB {
           unset($obj['id']); // lo elimino para que no lo parsee
           unset($attr['id']); // igual que antes
       }
-      else $bean = R::findOne($e,'id LIKE ?',[$obj['id']]);
+      else $bean = R::findOne($e,'id = ?',[$obj['id']]);
           // Deberia recorrer el objeto y conciliarlo con el
           // PYRUS ENTIDADES, ninguno deberia quedar afuera
           // Vamos a suponer que siempre se envio correctamente
@@ -422,7 +422,7 @@ class PYRUS_DB {
       }
     	// agrego que esta activo
       // lo guardo
-      return R::store($bean);
+      return R::findOne($e,"id = ?",[R::store($bean)]);
       //return true;
   }
 }

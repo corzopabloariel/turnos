@@ -543,9 +543,14 @@ define( "ENTIDADES",
                 "TEXTO" => "/detalle/ (/tipocontacto/)",
                 "ATTR" => ["detalle","tipocontacto"]
             ],
+            "FUNCIONES" => [
+                "tipocontacto" => [
+                    "onchange" => "changeContacto(this)"
+                ]
+            ],
             "FORM" => [
                 ["TEXTO" => "/id/ /idpersona/","ATTR" => ["id","idpersona"]],
-                ["TEXTO" => "<div class='form-row'><div class='form-group col-4'>/tipocontacto/</div><div class='form-group col-8'>/detalle/</div></div>","ATTR" => ["tipocontacto","detalle"]]
+                ["TEXTO" => "<div class='form-row'><div class='form-group col-1 d-flex justify-content-center align-items-center'><input type='checkbox' onchange='prepararDato(this);' /></div><div class='form-group col-4'>/tipocontacto/</div><div class='form-group col-7'>/detalle/</div></div>","ATTR" => ["tipocontacto","detalle"]]
             ]
         ],
         "personadomicilio" => [
@@ -750,7 +755,7 @@ define( "ENTIDADES",
                 "detalle" => [
                     "TIPO" => "TP_TEXT",
                     "VISIBILIDAD" => "TP_VISIBLE",
-                    "NECESARIO" => 1,
+                    "NECESARIO" => 0,
                     "DEFAULT" => NULL
                 ],
                 "administrador" => [

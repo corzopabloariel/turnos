@@ -1,3 +1,11 @@
+/** <VARIABLES> */
+Lobibox.notify.OPTIONS.error.sound = "error";
+Lobibox.notify.OPTIONS.info.sound = "info";
+Lobibox.notify.OPTIONS.default.sound = "default";
+Lobibox.notify.OPTIONS.success.sound = "success";
+Lobibox.notify.OPTIONS.warning.sound = "warning";
+/** </VARIABLES> */
+
 const translate_spanish = {
     buttons: {
         pageLength: {
@@ -44,6 +52,12 @@ const translate_spanish = {
         "rows": { _: "%d filas seleccionadas", 0: "", 1: "" }
     },
 };
+const personaPyrus = new Pyrus("persona");
+const personaDomicilioPyrus = new Pyrus("personadomicilio");
+const personaContactoPyrus = new Pyrus("personacontacto");
+const profesionalPyrus = new Pyrus("profesional");
+const lugarPyrus = new Pyrus("lugar");
+
 let userDATOS = {};
 /**
  * Función AJAX
@@ -66,7 +80,38 @@ userDATOS.ajax = function (action, data, asy, callBackOK) {
         callBackOK.call(this, msg);
     });
 }
-
+/**
+ * Función que usa la api Lobibox
+ *@param mensaje STRING: texto que aparece en la notificación
+ *@param tipo STRING: permite cambiar el color a la notificación
+ *@param dlay BOOL: flag para mostrar el indicador de demora
+ */
+userDATOS.notificacion = function (mensaje, tipo = 'info', delayIndicator = true, size = 'mini', delay = 2500) {
+    // Available types 'default', 'warning', 'info', 'success', 'error'
+    // Available size 'normal', 'mini', 'large'
+    if (mensaje == "") return false;
+    let types = { 'default': "", 'warning': "Precaución", 'info': "Información", 'success': "Completo", 'error': "Error" };
+    if (types[tipo] === undefined) {
+        console.log("Tipo erroneo");
+        return false;
+    }
+    let data = {
+        'size': size,
+        'icon': true,
+        'iconSource': 'fontAwesome',
+        'delayIndicator': delayIndicator,
+        'delay': delay,
+        'title': types[tipo],
+        'showClass': 'fadeInDown',
+        'hideClass': 'fadeUpDown',
+        'msg': mensaje,
+        'soundPath': 'assets/sounds/',
+        'soundExt': '.ogg',
+        'onClickUrl': null,
+        'sound': true
+    };
+    Lobibox.notify(tipo, data);
+};
 /**
  * Función para la búsqueda directo en la BD
  * @param value: valor a buscar
@@ -84,6 +129,22 @@ userDATOS.busqueda = function (values, callBackOK, asy = false) {
     };
     userDATOS.ajax("search", data, asy, callBackOK);
 }
+/**
+ * Valida el formulario con elemento required y visible
+ * @param t STRING: elemento donde se busca la info
+ */
+userDATOS.validar = function (t, marca = true, visible = true) {
+    let flag = 1;
+    $(t).find('*[required="true"]').each(function () {
+        if ($(this).is(":visible")) {
+            if ($(this).is(":invalid") || $(this).val() == "") {
+                flag = 0;
+                // if (marca) $(this).addClass("has-error");
+            }
+        }
+    });
+    return flag;
+};
 /** */
 userDATOS.encodeBase64 = function( src ) {
     let _r = null;
@@ -117,11 +178,6 @@ userDATOS.vistaProfesional = function(target, lugar) {
         userDATOS.dataTable($("#table"),{ tipo:"turnos_dia", entidad: "usuarioturno"});
     } else if(lugar == "misDatos") {
         user = JSON.parse(sessionStorage.user);
-        personaPyrus = new Pyrus("persona");
-        lugarPyrus = new Pyrus("lugar");
-        personaContactoPyrus = new Pyrus("personacontacto");
-        personaDomicilioPyrus = new Pyrus("personadomicilio");
-        profesionalPyrus = new Pyrus("profesional");
 
         profesional = profesionalPyrus.mostrar_1(user.idprofesional);
         lugar = lugarPyrus.mostrar_1(user.idlugar);

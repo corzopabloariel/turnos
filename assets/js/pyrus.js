@@ -49,7 +49,7 @@ Pyrus = function (e = null) {
     this.objetoLimpio = function () {
         this.elemento = {};
         for (var i in this.especificacion) {
-            if (i == "autofecha") continue;
+            if (i == "autofecha" || i == "elim") continue;
             if (this.especificacion[i]["DEFAULT"] === undefined) this.elemento[i] = null;
             else this.elemento[i] = this.especificacion[i]["DEFAULT"];
         }
@@ -227,8 +227,9 @@ Pyrus = function (e = null) {
         dato_guardar["objeto"] = OBJ_dato;
         dato_guardar["attr"] = this.objeto["ATRIBUTOS"];
         id = -1;
-        this.query("guardar_uno_generico", dato_guardar, function (m) {
-            id = m;
+        this.query("guardar_uno_generico", dato_guardar, function (data) {
+            window.mostrar_1[dato_guardar["entidad"]]["id"][data.id] = data;
+            id = data.id;
         }, null, asy);
         return id;
     };
@@ -273,7 +274,7 @@ Pyrus = function (e = null) {
                 }
             }
         }
-        return window.formulario[this.entidad][id];
+        return `<div class="contenedorForm" id="form_${this.entidad + (id != "" ? "_" + id : "")}">${window.formulario[this.entidad][id]}</div>`;
     }
     /* ----------------- */
     this.inputAdecuado = function (OBJ_elemento, ATTR_nombre, TAG_nombre, STR_class, OBJ_funcion) {
@@ -326,7 +327,7 @@ Pyrus = function (e = null) {
         if (OBJ_funcion !== null) {
             for (var i in OBJ_funcion) {
                 if (STR_funcion != "") STR_funcion += " ";
-                STR_funcion += i + "=" + OBJ_funcion[i];
+                STR_funcion += `${i}=${OBJ_funcion[i]}`;
             }
         }
         switch (STR_type) {
@@ -346,13 +347,18 @@ Pyrus = function (e = null) {
             case "time":
                 STR_class += " texto-time text-right";
                 break;
+            case "hidden":
+                STR_class = "d-none";
+                STR_type = "text";
+                break;
         }
-        return "<input " + (necesario ? "required='true'" : "") + " " + STR_funcion + " ng-name='" + STR_nombre + "' name='" + STR_nombre + "' id='" + STR_nombre + "' class=\"" + STR_class + "\" type='" + STR_type + "' placeholder='" + OBJ_elemento["NOMBRE"] + "' />";
+        return `<input ${(necesario ? "required" : "")} ${STR_funcion} ng-model="${STR_nombre}" name="${STR_nombre}" id="${STR_nombre}" class="${STR_class}" type="${STR_type}" placeholder="${OBJ_elemento["NOMBRE"]}" />`;
     }
     /** */
     this.inputTextarea = function (OBJ_elemento, STR_nombre, STR_class, OBJ_funcion = null) {
         let STR_funcion = "";
-        let necesario = OBJ_elemento["NECESARIO"];
+        let necesario = 0;
+        if (OBJ_elemento["NECESARIO"] !== undefined) necesario = OBJ_elemento["NECESARIO"];
 
         if (OBJ_funcion !== null) {
             for (var i in OBJ_funcion) {
@@ -360,25 +366,26 @@ Pyrus = function (e = null) {
                 STR_funcion += i + "=" + OBJ_funcion[i];
             }
         }     
-        return `<textarea ${(necesario ? "required='true'" : "")} ${STR_funcion} ng-name="${STR_nombre}" name="${STR_nombre}" id="${STR_nombre}" class="${STR_class}" placeholder="${OBJ_elemento["NOMBRE"]}"></textarea>`;
+        return `<textarea ${(necesario ? "required" : "")} ${STR_funcion} ng-model="${STR_nombre}" name="${STR_nombre}" id="${STR_nombre}" class="${STR_class}" placeholder="${OBJ_elemento["NOMBRE"]}"></textarea>`;
     }
 	/**
 	 * Función para la creación de formularios en un lugar determinado del dom
 	 */
     this.select = function (OBJ_elemento, STR_nombre, STR_class, OBJ_funcion, OBJ_datos = null) {
         let STR_funcion = "";
-
+        let necesario = 0;
+        if (OBJ_elemento["NECESARIO"] !== undefined) necesario = OBJ_elemento["NECESARIO"];
         if (OBJ_funcion !== null) {
             for (var i in OBJ_funcion) {
                 if (STR_funcion != "") STR_funcion += " ";
-                STR_funcion += i + "=" + OBJ_funcion[i];
+                STR_funcion += `${i}=${OBJ_funcion[i]}`;
             }
         }
         if (OBJ_datos === null) OBJ_datos = this.selector();
-        let return_STR = "<select " + (OBJ_elemento["NECESARIO"] ? "required='true'" : "") + " " + STR_funcion + " style='100%' ng-name='" + STR_nombre + "' name='" + STR_nombre + "' id='" + STR_nombre + "' class=\"" + STR_class + " select__2\" data-allow-clear='true' data-placeholder='" + OBJ_elemento["NOMBRE"] + "'>";
+        let return_STR = `<select ${(necesario ? "required" : "")} ${STR_funcion} style="100%" ng-model="${STR_nombre}" name="${STR_nombre}" id="${STR_nombre}" class="${STR_class} select__2" data-allow-clear="true" data-placeholder="${OBJ_elemento["NOMBRE"]}">`;
         return_STR += "<option value=''></option>";
         for (var i in OBJ_datos)
-            return_STR += "<option value='" + i + "'>" + OBJ_datos[i] + "</option>";
+            return_STR += `<option value="${i}">${OBJ_datos[i]}</option>`;
 
         return_STR += "</select>";
         return return_STR;
@@ -396,11 +403,11 @@ Pyrus = function (e = null) {
                 attr = OBJ_formato['ATTR'][i];
                 value = ARR_resultado[x][OBJ_formato['ATTR'][i]];
                 if (this.especificacion[attr]['TIPO'] != 'TP_RELACION') {
-                    STR_form = STR_form.replace('/' + OBJ_formato['ATTR'][i] + '/', value);
+                    STR_form = STR_form.replace(`/${OBJ_formato['ATTR'][i]}/`, value);
                 } else {
                     tabla = this.especificacion[attr]['RELACION']['ENTIDAD'];
                     tabla_attr = this.especificacion[attr]['RELACION']['ATTR'];
-                    STR_form = STR_form.replace('/' + OBJ_formato['ATTR'][i] + '/', this.relacion(tabla, tabla_attr, value));
+                    STR_form = STR_form.replace(`/${OBJ_formato['ATTR'][i]}/`, this.relacion(tabla, tabla_attr, value));
                 }
                 ARR_aux[ARR_resultado[x]["id"]] = STR_form;
             }
