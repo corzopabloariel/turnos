@@ -175,7 +175,7 @@ Pyrus = function (e = null) {
 	 * Devuelve un objeto o ARRAY de objetos de la entidadd
 	 */
     this.busqueda = function (data, callbackOK, asy = true) {
-        this.query("get_uno", { "entidad": this.entidad, "column": data.attr, "value": data.value }, callbackOK, null, asy);
+        this.query("get_uno", { entidad: this.entidad, column: data.attr, value: data.value }, callbackOK, null, asy);
     }
     /**
      *
@@ -207,9 +207,16 @@ Pyrus = function (e = null) {
         callbackOK.call( this, _r );
     };
 	/**
-	 *
+	 * Función en cargada de revisar y guardar Información
+     * Revisa si la entidad tiene un elemento UNICO, verifica la condición de unicidad del
+     * registro; en caso afirmativo continua el guardado, caso contrario, retorna un 0
+     ** 
+     *@param OBJ_dato: objeto a guardar, respetar las key que equivalen a las columnas de la tabla
+     *@param asy: booleano encargado de convertir una función asincrona o no
+     *@param tipo: INT encargado de establecer la cantidad de elementos permitidos con los mismos valores.
+                SI el parámetro "tipo" es 1, quiere decir que se esta realizando un UPDATE de la información
 	 */
-    this.guardar_1 = function (OBJ_dato, asy = false) {
+    this.guardar_1 = function (OBJ_dato, asy = false, tipo = 0) {
         let dato_guardar = {};
         if (this.objeto["UNIQUE"] !== undefined) {
             let aux = {};
@@ -221,22 +228,43 @@ Pyrus = function (e = null) {
             this.query("unique", aux, function (m) {
                 unique = m;
             }, null, false);
-            if (unique > 0) return 0;
+            if(tipo) {
+                if (unique >= tipo) return 0;
+            } else {
+                if (unique > tipo) return 0;
+            }
         }
         dato_guardar["entidad"] = this.entidad;
         dato_guardar["objeto"] = OBJ_dato;
         dato_guardar["attr"] = this.objeto["ATRIBUTOS"];
+        console.log(dato_guardar)
         id = -1;
         this.query("guardar_uno_generico", dato_guardar, function (data) {
-            window.mostrar_1[dato_guardar["entidad"]]["id"][data.id] = data;
+            if (window.mostrar_1[dato_guardar["entidad"]] !== undefined)
+                delete window.mostrar_1[dato_guardar["entidad"]];
             id = data.id;
         }, null, asy);
         return id;
     };
+    this.guardar = function (id, value, column) {
+        this.busqueda({ attr: "id", value: id },function(data) {
+            if(data !== null) {
+                data[column] = value;
+                dato_guardar = {};
+                dato_guardar["entidad"] = this.entidad;
+                dato_guardar["objeto"] = data;
+                dato_guardar["attr"] = this.objeto["ATRIBUTOS"];
+                this.query("guardar_uno_generico", dato_guardar, function (e) {
+                    if (window.mostrar_1[dato_guardar["entidad"]] !== undefined)
+                        delete window.mostrar_1[dato_guardar["entidad"]];
+                });
+            } else console.log("#### DATO NO ENCONTRADO");
+        });
+    }
 	/**
 	 *
 	 */
-    this.formulario_OK = function (id = "") {
+    this.formulario_OK = function (id = "",  ngReadOnly = null) {
         if (window.formulario === undefined)
             window.formulario = [];
 
@@ -263,11 +291,15 @@ Pyrus = function (e = null) {
                             TEXTO = TEXTO.replace(`/${ATTR[e]}/`, this.inputAdecuado(this.especificacion[ATTR[e]], ATTR[e], AUX_nombre, STR_class));
                         else {
                             let OBJ_funcion = {};
+                            if (TEXTO.indexOf("ngReadOnly") > 0) {
+                                if(ngReadOnly !== null)
+                                    TEXTO = TEXTO.replace("ngReadOnly", `ng-disabled="${ngReadOnly}"`);
+                            }
                             let label = (this.especificacion[ATTR[e]]["NOMBRE"] === undefined ? ATTR[e] : this.especificacion[ATTR[e]]["NOMBRE"]);
                             if (OBJ_funciones[ATTR[e]] !== undefined)
                                 OBJ_funcion = this.objeto['FUNCIONES'][ATTR[e]];
                             
-                            TEXTO = TEXTO.replace(`/${ATTR[e]}/`, `<label class="text-truncate text-capitalize d-block">${label.toLowerCase()}</label>${this.inputAdecuado(this.especificacion[ATTR[e]], ATTR[e], AUX_nombre, STR_class, OBJ_funcion)}`);
+                            TEXTO = TEXTO.replace(`/${ATTR[e]}/`, `<label class="text-truncate text-capitalize d-block">${label.toLowerCase()}</label>${this.inputAdecuado(this.especificacion[ATTR[e]], ATTR[e], AUX_nombre, STR_class, OBJ_funcion, ngReadOnly)}`);
                         }
                     }
                     window.formulario[this.entidad][id] += TEXTO
@@ -277,59 +309,62 @@ Pyrus = function (e = null) {
         return `<div class="contenedorForm" id="form_${this.entidad + (id != "" ? "_" + id : "")}">${window.formulario[this.entidad][id]}</div>`;
     }
     /* ----------------- */
-    this.inputAdecuado = function (OBJ_elemento, ATTR_nombre, TAG_nombre, STR_class, OBJ_funcion) {
+    this.inputAdecuado = function (OBJ_elemento, ATTR_nombre, TAG_nombre, STR_class, OBJ_funcion = null, ngReadOnly = null) {
         if (OBJ_elemento['NOMBRE'] === undefined) OBJ_elemento['NOMBRE'] = ATTR_nombre;
         OBJ_elemento['NOMBRE'] = (OBJ_elemento['NOMBRE']).toUpperCase();
 
         if (OBJ_elemento['VISIBILIDAD'] == 'TP_OCULTO' || OBJ_elemento['VISIBILIDAD'] == 'TP_VISIBLE') {
             switch (OBJ_elemento['TIPO']) {
                 case 'TP_INTEGER':
-                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "number", STR_class, OBJ_funcion);
+                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "number", STR_class, OBJ_funcion, ngReadOnly);
                     break;
                 case 'TP_STRING':
-                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "text", STR_class, OBJ_funcion);
+                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "text", STR_class, OBJ_funcion, ngReadOnly);
                     break;
                 case 'TP_TEXT':
-                    return this.inputTextarea(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion);
+                    return this.inputTextarea(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion, ngReadOnly);
                     break;
                 case 'TP_DATE':
-                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "date", STR_class, OBJ_funcion);
+                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "date", STR_class, OBJ_funcion, ngReadOnly);
                     break;
                 case 'TP_TIME':
-                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "time", STR_class, OBJ_funcion);
+                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "time", STR_class, OBJ_funcion, ngReadOnly);
                     break;
                 case 'TP_PASSWORD':
-                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "password", STR_class, OBJ_funcion);
+                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "password", STR_class, OBJ_funcion, ngReadOnly);
                     break;
                 case 'TP_RELACION':
                     if (OBJ_elemento['RELACION']['ENTIDAD'] != this.entidad) {
                         let NEW_aux = new Pyrus(OBJ_elemento['RELACION']['ENTIDAD']);
-                        return NEW_aux.select(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion);
+                        return NEW_aux.select(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion, null, ngReadOnly);
                     } else
-                        return this.select(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion);
+                        return this.select(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion, null, ngReadOnly);
                     break;
                 case 'TP_OPTION':
                     option = {};
                     for (var i in OBJ_elemento["OPTION"]) 
                         option[OBJ_elemento["OPTION"][i]["id"]] = OBJ_elemento["OPTION"][i]["text"];
-                    return this.select(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion, option);
+                    return this.select(OBJ_elemento, this.entidad + "_" + TAG_nombre, STR_class, OBJ_funcion, option, ngReadOnly);
                     break;
                 default:
-                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "text", STR_class, OBJ_funcion);
+                    return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "text", STR_class, OBJ_funcion, ngReadOnly);
             }
         } else return this.inputString(OBJ_elemento, this.entidad + "_" + TAG_nombre, "hidden", STR_class);
     }
 
-    this.inputString = function (OBJ_elemento, STR_nombre, STR_type, STR_class, OBJ_funcion = null) {
+    this.inputString = function (OBJ_elemento, STR_nombre, STR_type, STR_class, OBJ_funcion = null, ngReadOnly = null) {
         let STR_funcion = "";
         let necesario = 0;
         if (OBJ_elemento["NECESARIO"] !== undefined) necesario = OBJ_elemento["NECESARIO"];
+        
         if (OBJ_funcion !== null) {
             for (var i in OBJ_funcion) {
                 if (STR_funcion != "") STR_funcion += " ";
                 STR_funcion += `${i}=${OBJ_funcion[i]}`;
             }
         }
+        if (ngReadOnly !== null) ngReadOnly = `ng-readonly="${ngReadOnly}"`;
+        else ngReadOnly = "";
         switch (STR_type) {
             case "number":
                 STR_type = "text";
@@ -352,13 +387,15 @@ Pyrus = function (e = null) {
                 STR_type = "text";
                 break;
         }
-        return `<input ${(necesario ? "required" : "")} ${STR_funcion} ng-model="${STR_nombre}" name="${STR_nombre}" id="${STR_nombre}" class="${STR_class}" type="${STR_type}" placeholder="${OBJ_elemento["NOMBRE"]}" />`;
+        return `<input ${(OBJ_elemento["SIZE"] !== undefined ? `maxlength="${OBJ_elemento["SIZE"]}"` : '')} ${ngReadOnly} ${(necesario ? "required" : "")} ${STR_funcion} ng-model="${STR_nombre}" name="${STR_nombre}" id="${STR_nombre}" class="${STR_class}" type="${STR_type}" placeholder="${OBJ_elemento["NOMBRE"]}" />`;
     }
     /** */
-    this.inputTextarea = function (OBJ_elemento, STR_nombre, STR_class, OBJ_funcion = null) {
+    this.inputTextarea = function (OBJ_elemento, STR_nombre, STR_class, OBJ_funcion = null, ngReadOnly = null) {
         let STR_funcion = "";
         let necesario = 0;
         if (OBJ_elemento["NECESARIO"] !== undefined) necesario = OBJ_elemento["NECESARIO"];
+        if (ngReadOnly !== null) ngReadOnly = `ng-readonly="${ngReadOnly}"`;
+        else ngReadOnly = "";
 
         if (OBJ_funcion !== null) {
             for (var i in OBJ_funcion) {
@@ -366,12 +403,12 @@ Pyrus = function (e = null) {
                 STR_funcion += i + "=" + OBJ_funcion[i];
             }
         }     
-        return `<textarea ${(necesario ? "required" : "")} ${STR_funcion} ng-model="${STR_nombre}" name="${STR_nombre}" id="${STR_nombre}" class="${STR_class}" placeholder="${OBJ_elemento["NOMBRE"]}"></textarea>`;
+        return `<textarea ${ngReadOnly} ${(necesario ? "required" : "")} ${STR_funcion} ng-model="${STR_nombre}" name="${STR_nombre}" id="${STR_nombre}" class="${STR_class}" placeholder="${OBJ_elemento["NOMBRE"]}"></textarea>`;
     }
 	/**
 	 * Función para la creación de formularios en un lugar determinado del dom
 	 */
-    this.select = function (OBJ_elemento, STR_nombre, STR_class, OBJ_funcion, OBJ_datos = null) {
+    this.select = function (OBJ_elemento, STR_nombre, STR_class, OBJ_funcion, OBJ_datos = null, ngReadOnly = null) {
         let STR_funcion = "";
         let necesario = 0;
         if (OBJ_elemento["NECESARIO"] !== undefined) necesario = OBJ_elemento["NECESARIO"];
@@ -381,8 +418,11 @@ Pyrus = function (e = null) {
                 STR_funcion += `${i}=${OBJ_funcion[i]}`;
             }
         }
+        if (ngReadOnly !== null) ngReadOnly = `ng-disabled="${ngReadOnly}"`;
+        else ngReadOnly = "";
+
         if (OBJ_datos === null) OBJ_datos = this.selector();
-        let return_STR = `<select ${(necesario ? "required" : "")} ${STR_funcion} style="100%" ng-model="${STR_nombre}" name="${STR_nombre}" id="${STR_nombre}" class="${STR_class} select__2" data-allow-clear="true" data-placeholder="${OBJ_elemento["NOMBRE"]}">`;
+        let return_STR = `<select ${ngReadOnly} ${(necesario ? "required" : "")} ${STR_funcion} style="100%" ng-model="${STR_nombre}" name="${STR_nombre}" id="${STR_nombre}" class="${STR_class} select__2" data-allow-clear="true" data-placeholder="${OBJ_elemento["NOMBRE"]}">`;
         return_STR += "<option value=''></option>";
         for (var i in OBJ_datos)
             return_STR += `<option value="${i}">${OBJ_datos[i]}</option>`;

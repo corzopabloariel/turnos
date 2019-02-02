@@ -53,10 +53,13 @@ const translate_spanish = {
     },
 };
 const personaPyrus = new Pyrus("persona");
+const personaTipoPyrus = new Pyrus("personatipo");
 const personaDomicilioPyrus = new Pyrus("personadomicilio");
 const personaContactoPyrus = new Pyrus("personacontacto");
 const profesionalPyrus = new Pyrus("profesional");
+const usuarioPyrus = new Pyrus("usuario");
 const lugarPyrus = new Pyrus("lugar");
+const especializacionPyrus = new Pyrus("especializacion");
 
 let userDATOS = {};
 /**
@@ -135,7 +138,7 @@ userDATOS.busqueda = function (values, callBackOK, asy = false) {
  */
 userDATOS.validar = function (t, marca = true, visible = true) {
     let flag = 1;
-    $(t).find('*[required="true"]').each(function () {
+    $(t).find('*[required]').each(function () {
         if ($(this).is(":visible")) {
             if ($(this).is(":invalid") || $(this).val() == "") {
                 flag = 0;
@@ -180,13 +183,36 @@ userDATOS.vistaProfesional = function(target, lugar) {
         user = JSON.parse(sessionStorage.user);
 
         profesional = profesionalPyrus.mostrar_1(user.idprofesional);
-        lugar = lugarPyrus.mostrar_1(user.idlugar);
-        personaNombre = personaPyrus.mostrar_1(user.idpersona);
-        personaDocumento = personaPyrus.mostrar_1(user.idpersona, "id", { TEXTO: "/tipodocumento/ /documento/", ATTR: ["tipodocumento", "documento"] });
-        personaFecha = personaPyrus.mostrar_1(user.idpersona, "id", { TEXTO: "/fechanacimiento/", ATTR: ["fechanacimiento"] });
-
+        if(profesional === null) {
+            profesional = {}
+            profesional.duracionturno = null;
+            profesional.entreturno = null;
+            profesional.matricula = null;
+            profesional.idespecializacion = 0;
+            profesional.detalle = null;
+        }
         total = 1;
         datosNecesarios = [];
+        lugar = lugarPyrus.mostrar_1(user.idlugar);
+        personaNombre = personaPyrus.mostrar_1(user.idpersona);
+        
+        if (personaNombre === null) {
+            total -= .1;
+            datosNecesarios.push("Nombre completo (10%)");
+            personaNombre = "Sin especificar";
+        }
+        personaDocumento = personaPyrus.mostrar_1(user.idpersona, "id", { TEXTO: "/tipodocumento/ /documento/", ATTR: ["tipodocumento", "documento"] });
+        if (personaDocumento === null) {
+            total -= .06;
+            datosNecesarios.push("Documento (6%)");
+            personaDocumento = "Sin especificar";
+        }
+        personaFecha = personaPyrus.mostrar_1(user.idpersona, "id", { TEXTO: "/fechanacimiento/", ATTR: ["fechanacimiento"] });
+        if (personaFecha === null) {
+            total -= .04;
+            datosNecesarios.push("Fecha de nacimiento (4%)");
+            personaFecha = "Sin especificar";
+        } else personaFecha = `<i class="fas fa-calendar-day"></i> ${personaFecha}`;
         html = "";
         html += "<div class='container py-4'>";
             html += "<div class='row'>";
@@ -218,41 +244,42 @@ userDATOS.vistaProfesional = function(target, lugar) {
                             html += `<p class=''><strong class='mr-2'>Documento</strong> <span class='float-right'>${personaDocumento}</span></p>`;
                             html += `<p class='mb-0'><strong class='mr-2'>F. Nacimiento</strong><span class='float-right'>${personaFecha}</span></p>`;
                             html += "<hr/>";
-                            if(profesional.duracionturno === null) {
+                            if(profesional.duracionturno === null || profesional.duracionturno == "00:00:00") {
                                 total -= .15;
                                 datosNecesarios.push("Duración del turno (15%)");
                                 html += "<p class=''><strong class='mr-2'>Duración</strong><span class='text-muted float-right'>sin especificar</span></p>";
                             } else {
-
+                                html += `<p class=""><strong class="mr-2">Duración</strong><span class="float-right"><i class="fas fa-business-time"></i> ${profesional.duracionturno.substr(0, 5)}</span></p>`;
                             }
-                            if(profesional.entreturno === null) {
+                            if(profesional.entreturno === null || profesional.entreturno == "00:00:00") {
                                 total -= .15;
                                 datosNecesarios.push("Tiempo e/ sesiones (15%)");
                                 html += "<p class=''><strong class='mr-2'>Tiempo e/ sesión</strong><span class='text-muted float-right'>sin especificar</span></p>";
                             } else {
-                                
+                                html += `<p class=""><strong class="mr-2">Tiempo e/ sesión</strong><span class="float-right"><i class="fas fa-clock"></i> ${profesional.entreturno.substr(0, 5)}</span></p>`;
                             }
                             html += "<hr/>";
-                            if(profesional.matricula === null) {
+                            if(profesional.matricula === null || profesional.matricula == "") {
                                 total -= .2;
                                 datosNecesarios.push("Matrícula (20%)")
                                 html += "<p class=''><strong class='mr-2'>Matrícula</strong><span class='text-muted float-right'>sin especificar</span></p>";
                             } else {
-                                
+                                html += `<p class=""><strong class="mr-2">Matrícula</strong><span class="float-right">${profesional.matricula}</span></p>`;
                             }
-                            if(parseInt(profesional.idespecializacion) == 0) {
+                            if(parseInt(profesional.idespecializacion) == 0 || profesional.idespecializacion == "") {
                                 total -= .1;
                                 datosNecesarios.push("Especialización (10%)");
                                 html += "<p class='mb-0'><strong class='mr-2'>Especialización</strong><span class='text-muted float-right'>sin especificar</span></p>";
                             } else {
-                                
+                                esp = especializacionPyrus.mostrar_1(profesional.idespecializacion);
+                                html += `<p class="mb-0"><strong class="mr-2">Especialización</strong><span class="float-right">${esp}</span></p>`;
                             }
-                            if(profesional.detalle !== null) {
-                                html += "<hr/>";
-                                html += `<p class="mb-0">${profesional.detalle}</p>`;
-                            } else {
+                            if(profesional.detalle === null || profesional.detalle == "") {
                                 total -= .07;
                                 datosNecesarios.push("Breve descripción (7%)");
+                            } else {
+                                html += "<hr/>";
+                                html += `<p class="mb-0">${profesional.detalle}</p>`;
                             }
                         html += "</div>";
                         html += "<div id='cardFooterContacto' class='card-footer bg-light-accent color-light-shades'>";
@@ -294,10 +321,10 @@ userDATOS.vistaProfesional = function(target, lugar) {
         userDATOS.busqueda({ entidad: "personacontacto", value: user.idpersona, column: "idpersona", retorno: 0 }, function (data) {
             t = $("#cardFooterContacto");
             html = "<h3>Contacto</h3>";
-            if(data.data === null) {
+            if(data.data.length == 0) {
                 total -= .1;
                 datosNecesarios.push("Algún contacto (10%)");
-                html += "<p class='mb-0'><span class='text-muted'>Sin especificar</span></p>";
+                html += "<p class='mb-0 text-center'><span class=''>Sin especificar</span></p>";
             } else {
                 html += "<ul class='list-group color-dark-shades'>";
                 tipoContacto = {'1':'<i class="fas fa-phone mr-2"></i>', '2':'<i class="fas fa-mobile-alt mr-2"></i>','3':'<i class="fas fa-at mr-2"></i>'};
@@ -307,13 +334,13 @@ userDATOS.vistaProfesional = function(target, lugar) {
                 html += "</ul>";
             }
             
-
+            html += "<hr/>";
             html += "<h3 class='mt-3'>Domicilio</h3>";
             personaDomicilio = personaDomicilioPyrus.mostrar_1(user.idpersona,"idpersona");
-            if (personaDomicilio == "") {
+            if (personaDomicilio == "" || personaDomicilio === null) {
                 total -= .03;
                 datosNecesarios.push("Domicilio (3%)");
-                html += "<p class='mb-0'><span class='text-muted'>Sin especificar</span></p>";
+                html += "<p class='mb-0 text-center'><span class=''>Sin especificar</span></p>";
             } else
                 html += `<p class="mb-0"><i class="fas fa-map-marker-alt mr-2 color-dark-accent"></i>${personaDomicilio}</p>`;
             t.html(html);
@@ -335,6 +362,9 @@ userDATOS.vistaProfesional = function(target, lugar) {
                 hh += '</div>';
                 
                 tt.html(hh);
+            } else {
+                tt = $("#divEstadoDatos");
+                tt.html("");
             }
         }, true );
     }

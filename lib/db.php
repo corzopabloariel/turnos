@@ -32,7 +32,7 @@ class PYRUS_DB {
    * @param integer $id id
    */
   static function get_uno($e,$column,$value) {
-    return R::findOne($e,"{$column} LIKE ?", [$value]);
+    return R::findOne($e,"{$column} LIKE ? AND elim = ?", [$value,0]);
   }
   /**
    * Función que genera los elementos de una tabla para DATATABLE
@@ -270,9 +270,8 @@ class PYRUS_DB {
 	 *
 	 */
 	static function remove_uno($e,$id){
-		$b = R::findOne($e,'id LIKE ?',[$id]);
-		$b['elim'] = 1;
-		R::store($b);
+    $sql = "UPDATE {$e} SET elim = 1 WHERE id = {$id}";
+		self::$mysqli->query($sql);
 	}
 	/**
 	 *
@@ -392,38 +391,19 @@ class PYRUS_DB {
 	 *
 	 */
   static function set_one($e,$obj,$attr){
-      // return $obj;
-      //$attr = $obj['attr'];
-      if($obj['id'] == 'nulo'){
-          $bean = R::xdispense($e);
-          unset($obj['id']); // lo elimino para que no lo parsee
-          unset($attr['id']); // igual que antes
+    if($obj['id'] == 'nulo') {
+      $bean = R::xdispense($e);
+      unset($obj['id']); // lo elimino para que no lo parsee
+      unset($attr['id']); // igual que antes
+    }
+    else $bean = R::findOne($e,'id = ?',[$obj['id']]);
+    foreach($attr as $k => $v){
+      if(isset($obj[$k])){
+        if(empty($obj[$k])) continue;
+        $bean[$k] = $obj[$k];
       }
-      else $bean = R::findOne($e,'id = ?',[$obj['id']]);
-          // Deberia recorrer el objeto y conciliarlo con el
-          // PYRUS ENTIDADES, ninguno deberia quedar afuera
-          // Vamos a suponer que siempre se envio correctamente
-          // la entidad, obtengo la key y la saco de obj
-	        // var_dump($obj);
-      foreach($attr as $k => $v){
-          // TODO: Revisar atributos enviados, ej; si se envia modificar
-          // un constante de un elemento cuyo id existe, entonces NO DEBO
-          // GUARDARLO, y asi con cada elemento
-
-          if(isset($obj[$k])){
-        		// si viene una imagen, la guardo y guardo la url dentro del valor
-        		$valor = $obj[$k];
-            $bean[$k] = $valor;
-    			}
-          // termino con toda la ejecucion si hay error
-          //else
-              //return PYRUS_NOTIFICATIONS::error('el atributo ' . $k . ' no existe '
-                  //. 'en la declaracion de entidad o no se ha enviado');
-      }
-    	// agrego que esta activo
-      // lo guardo
-      return R::findOne($e,"id = ?",[R::store($bean)]);
-      //return true;
+    }
+    return R::findOne($e,"id = ?",[R::store($bean)]);
   }
 }
 

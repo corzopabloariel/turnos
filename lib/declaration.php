@@ -485,7 +485,8 @@ define( "ENTIDADES",
                 ["TEXTO" => "/id/","ATTR" => ["id"]],
                 ["TEXTO" => "<div class='form-row'><div class='form-group col-6'>/nombre/</div><div class='form-group col-6'>/apellido/</div></div>","ATTR" => ["nombre","apellido"]],
                 ["TEXTO" => "<div class='form-row'><div class='form-group col-3'>/tipodocumento/</div><div class='form-group col-4'>/documento/</div><div class='form-group col-5'>/fechanacimiento/</div></div>","ATTR" => ["tipodocumento","documento","fechanacimiento"]]
-            ]
+            ],
+            "UNIQUE" => ["idlugar","nombre","apellido","tipodocumento","documento"]
         ],
         "personacontacto" => [
             "ATRIBUTOS" => [
@@ -550,8 +551,9 @@ define( "ENTIDADES",
             ],
             "FORM" => [
                 ["TEXTO" => "/id/ /idpersona/","ATTR" => ["id","idpersona"]],
-                ["TEXTO" => "<div class='form-row'><div class='form-group col-1 d-flex justify-content-center align-items-center'><input type='checkbox' onchange='prepararDato(this);' /></div><div class='form-group col-4'>/tipocontacto/</div><div class='form-group col-7'>/detalle/</div></div>","ATTR" => ["tipocontacto","detalle"]]
-            ]
+                ["TEXTO" => "<div class='form-row'><div class='form-group col-1 d-flex justify-content-center align-items-center'><input ngReadOnly type='checkbox' onchange='prepararDato(this);' /></div><div class='form-group col-4'>/tipocontacto/</div><div class='form-group col-7'>/detalle/</div></div>","ATTR" => ["tipocontacto","detalle"]]
+            ],
+            "UNIQUE" => ["tipocontacto","detalle"]
         ],
         "personadomicilio" => [
             "ATRIBUTOS" => [
@@ -624,7 +626,8 @@ define( "ENTIDADES",
                 ["TEXTO" => "/id/ /idpersona/","ATTR" => ["id","idpersona"]],
                 ["TEXTO" => "<div class='form-row'><div class='form-group col-8'>/calle/</div><div class='form-group col-4'>/altura/</div></div>","ATTR" => ["calle","altura"]],
                 ["TEXTO" => "<div class='form-row'><div class='form-group col-8'>/idlocalidad/</div><div class='form-group col-4'>/codigopostal/</div></div>","ATTR" => ["idlocalidad","codigopostal"]]
-            ]
+            ],
+            "UNIQUE" => ["idlocalidad","calle","altura","codigopostal"]
         ],
         "personatipo" => [
             "ATRIBUTOS" => [
